@@ -21,7 +21,7 @@ La API genera 360 movimientos simulados por llamada, 30 por cada mes del año; l
 - **Lenguaje y plataforma:** TypeScript/TSX, React y Node.js. React y React DOM están declarados en `dependencies`; el contenedor usa Node 24 Alpine. Fuentes: [frontend/package.json](../frontend/package.json), [frontend/Dockerfile](../frontend/Dockerfile).
 - **UI y gráficos:** Recharts, Lucide React, `class-variance-authority`, `clsx` y `tailwind-merge`, declarados como dependencias de ejecución en [frontend/package.json](../frontend/package.json).
 - **Desarrollo y build:** Vite, plugin React, Tailwind CSS con plugin de Vite, TypeScript, Vitest y ESLint están en `devDependencies`; los scripts `build`, `test` y `lint` están en [frontend/package.json](../frontend/package.json).
-- **Configuración:** [frontend/vite.config.ts](../frontend/vite.config.ts) habilita React/Tailwind, el alias `@` y el proxy `/api` hacia `http://backend:8000`.
+- **Configuración:** [frontend/vite.config.ts](../frontend/vite.config.ts) habilita React/Tailwind, el alias `@` y el proxy `/api` hacia `http://host.docker.internal:8000`; [docker-compose.yml](../docker-compose.yml) asigna `host.docker.internal:host-gateway` al contenedor frontend.
 
 ### Backend e infraestructura
 
@@ -38,13 +38,13 @@ La API genera 360 movimientos simulados por llamada, 30 por cada mes del año; l
 - **Frontera frontend/API:** `fetchFinancialData` tipa el resultado como `FinancialMovement[]`, pero retorna `response.json()` sin validación de estructura en tiempo de ejecución. Fuente: [frontend/src/App.tsx](../frontend/src/App.tsx).
 - **Configuración de desarrollo/seguridad:** CORS permite `"*"` junto con credenciales en [backend/app/main.py](../backend/app/main.py). `debugpy` escucha en `0.0.0.0:5678` y Compose publica ese puerto en [backend/Dockerfile](../backend/Dockerfile) y [docker-compose.yml](../docker-compose.yml).
 - **Tipado:** `strict` no está declarado en [frontend/tsconfig.app.json](../frontend/tsconfig.app.json) ni [frontend/tsconfig.node.json](../frontend/tsconfig.node.json).
-- **Proxy:** aunque Vite configura el proxy, la comprobación registrada de `localhost:5173/api/metrics` agotó el timeout; véase [verification.md](../verification.md).
+- **Proxy:** corregido para el Compose de este entorno después de observar timeouts TCP entre los peers de la bridge; el frontend alcanza el puerto backend publicado a través del gateway del host. La comprobación directa y proxificada devolvió `200` con 360 movimientos. Es evidencia de este entorno, no una garantía para cualquier instalación Docker. Fuente: [verification.md](../verification.md).
 
 ### Comprobaciones registradas
 
 La presencia de tests no significa que se hayan ejecutado. [frontend/src/lib/financial-utils.test.ts](../frontend/src/lib/financial-utils.test.ts) usa Vitest y [backend/tests/test_routes.py](../backend/tests/test_routes.py) usa pytest con `TestClient`.
 
-En [verification.md](../verification.md) se registran respuestas `200 OK` de `curl` para las rutas backend, `/docs` y `/openapi.json`; `/health` devolvió `{"status":"ok"}`. La misma nota registra timeout de 5 s en el proxy frontend y que `npm --prefix frontend run test -- src/lib/financial-utils.test.ts` no pudo iniciar en el host porque faltaba `vitest`.
+En [verification.md](../verification.md) se registran respuestas `200 OK` de `curl` para las rutas backend, `/docs` y `/openapi.json`; `/health` devolvió `{"status":"ok"}`. El primer intento del proxy agotó 5 s; tras el cambio de target, la misma nota registra una respuesta `200 OK` con JSON. También registra que `npm --prefix frontend run test -- src/lib/financial-utils.test.ts` no pudo iniciar en el host porque faltaba `vitest`.
 
 Otros intentos locales registrados anteriormente quedaron bloqueados por dependencias ausentes: `python -m pytest backend/tests/test_routes.py -k top_categories` (`No module named pytest`), `npm --prefix frontend run build` (`tsc: not found`) y `npm --prefix frontend run lint` (`eslint: not found`). No hay en el registro una comprobación completa del flujo en navegador. No se presentan como aprobadas pruebas que no llegaron a ejecutarse.
 
@@ -52,7 +52,7 @@ Otros intentos locales registrados anteriormente quedaron bloqueados por depende
 
 Derivadas de los gaps observados, sin representar compromisos aprobados:
 
-1. Diagnosticar y volver a verificar el proxy Vite desde el navegador/host; la ruta directa del backend respondió, pero el proxy agotó el timeout.
+1. Verificar el proxy también en los entornos Docker/host que se vayan a usar; el ajuste con `host-gateway` se comprobó solo en el entorno actual.
 2. Validar en ejecución la forma del JSON antes de procesarlo como `FinancialMovement[]`.
 3. Aclarar la configuración destinada a producción: orígenes CORS, exposición de `debugpy` y opciones de TypeScript.
 4. Separar dependencias de backend por entorno si el proyecto necesita un entorno de producción distinto del desarrollo actual.

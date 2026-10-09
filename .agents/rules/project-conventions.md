@@ -60,10 +60,10 @@ Estas reglas se apoyan en el código actual. Las justificaciones describen hecho
 - **Compruébalo:** añade el caso mínimo afectado al test vecino y ejecuta `docker compose exec -T frontend npm run test -- src/lib/financial-utils.test.ts`.
 
 ### 8. Alias y proxy de Vite
-- **Cuándo aplica:** al añadir imports de módulos de `src` o al cambiar la URL del backend.
-- **Hecho del repo:** `frontend/vite.config.ts` asigna `@` a `src` y proxya `/api` a `http://backend:8000`; `App.tsx` permite `VITE_API_BASE_URL`.
-- **Haz esto:** usa imports `@/...` y solicita `/api/...` por defecto; reserva `VITE_API_BASE_URL` para apuntar deliberadamente a otro backend. No fijes `backend:8000` en componentes.
-- **Compruébalo:** prueba una ruta directamente en `localhost:8000` y la misma a través de `localhost:5173/api`; registra ambos resultados, porque el proxy local ya tuvo un timeout según `verification.md`.
+- **Cuándo aplica:** al añadir imports de módulos de `src` o cambiar la URL del backend en el frontend ejecutado con Docker Compose.
+- **Hecho del repo:** `frontend/vite.config.ts` asigna `@` a `src` y proxya `/api` a `http://host.docker.internal:8000`; `docker-compose.yml` asigna `host.docker.internal:host-gateway` al frontend y `App.tsx` permite `VITE_API_BASE_URL`. Esta ruta por gateway se adoptó después de observar timeouts TCP entre los peers de la red bridge en este entorno.
+- **Haz esto:** usa imports `@/...` y solicita `/api/...` desde los componentes. En Compose, conserva el proxy por `host.docker.internal` junto con el alias `host-gateway`; no fijes hostnames de infraestructura en componentes. Para otro modo de ejecución, configura explícitamente `VITE_API_BASE_URL` o el proxy adecuado a ese entorno.
+- **Compruébalo:** desde el host, solicita `/api/metrics` directamente en `localhost:8000` y a través de `localhost:5173/api/metrics`; verifica status y JSON. Comprueba también `/` en `localhost:5173` y registra resultados. La prueba local y el motivo del target actual constan en `verification.md`; no generalices este comportamiento de red a todos los entornos Docker.
 
 ## Verificación común
 

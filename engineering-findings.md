@@ -31,7 +31,7 @@
 - **Contratos explícitos en la API.** `backend/app/routes.py` define modelos Pydantic para las respuestas, usa `Literal` para enums de operaciones/categorías y declara `response_model` en las rutas.
 - **Cálculos del dashboard aislados y probados.** `frontend/src/lib/financial-utils.ts` contiene las agregaciones y formateadores; `frontend/src/lib/financial-utils.test.ts` los cubre con Vitest.
 - **Pruebas HTTP del backend con TestClient.** `backend/tests/test_routes.py` valida status, forma de respuesta, filtros y orden cronológico.
-- **Integración de desarrollo centralizada.** `frontend/vite.config.ts` define el alias `@` y proxya `/api` a `backend:8000`; `docker-compose.yml` configura esos dos servicios.
+- **Integración de desarrollo centralizada.** `frontend/vite.config.ts` define el alias `@` y proxya `/api` a `host.docker.internal:8000`; `docker-compose.yml` configura los dos servicios y el alias `host.docker.internal:host-gateway` para el frontend.
 - **Periodo visible derivado de los datos.** `App.tsx` pasa `formatPeriod(monthlyData)` al encabezado y la utilidad cubre rangos y datos vacíos con tests.
 
 ## Riesgos adicionales observados
@@ -40,3 +40,5 @@
 - **Semilla aleatoria global.** `generate_mock_movements` llama `random.seed(seed)` y después usa las funciones globales de `random`; esto altera el estado aleatorio compartido del proceso. Evidencia: `backend/app/routes.py`.
 
 Estos hallazgos son propuestas para el trabajo futuro, no afirmaciones de que las medidas recomendadas ya estén implementadas.
+
+La validación registrada en `verification.md` observó que, en ese entorno, el tráfico TCP directo entre los contenedores agotaba el timeout mientras el puerto backend publicado era accesible vía gateway. El proxy vía host-gateway respondió correctamente allí; no se generaliza ese comportamiento a todas las instalaciones Docker.
