@@ -4,6 +4,7 @@ import {
   computeKPIs,
   computeMonthlyData,
   formatCurrency,
+  formatPeriod,
   formatPercent,
 } from "./financial-utils";
 import type { FinancialMovement } from "./financial-types";
@@ -100,6 +101,24 @@ describe("computeMonthlyData", () => {
       outcome: 0,
       profitPercent: 100,
     });
+  });
+});
+
+describe("formatPeriod", () => {
+  it("formats the available range across calendar years", () => {
+    const monthlyData = computeMonthlyData(sampleMovements);
+
+    expect(formatPeriod(monthlyData)).toBe("Jan 2024 - Feb 2024");
+  });
+
+  it("returns the month when the range contains one month", () => {
+    expect(formatPeriod(computeMonthlyData(sampleMovements.slice(0, 2)))).toBe(
+      "Jan 2024",
+    );
+  });
+
+  it("reports an empty range", () => {
+    expect(formatPeriod([])).toBe("No data");
   });
 });
 

@@ -37,7 +37,7 @@ Fuente: [backend/app/routes.py](../backend/app/routes.py). Consumo desde la inte
 ### Datos y entorno
 
 - El generador crea 360 movimientos ficticios: 30 por cada uno de los 12 meses. Las rutas usan la semilla 42; las fechas dependen de `date.today()`, por lo que la semilla no fija el calendario.
-- La etiqueta `2024 - Full Year` esta fija en la interfaz y no demuestra que los datos correspondan a 2024.
+- La interfaz muestra el periodo a partir del primer y ultimo mes de movimientos recibidos; las fechas mock dependen de `date.today()`.
 - No encontramos evidencia de PostgreSQL ni de persistencia de los movimientos; las rutas generan datos mock.
 - Compose configura frontend en el puerto 5173 y backend en el 8000. El backend usa Uvicorn con recarga y publica el puerto 5678 de `debugpy`: es configuracion de desarrollo, no evidencia de un despliegue de produccion.
 
