@@ -25,3 +25,18 @@
    - **Regla:** Valida en tiempo de ejecución el JSON de la API antes de tratarlo como `FinancialMovement[]`.
    - **Hecho del repositorio:** `fetchFinancialData` declara el tipo `Promise<FinancialMovement[]>` y retorna directamente `response.json()` sin validar su estructura.
    - **Evidencia:** `frontend/src/App.tsx:14-20`.
+
+## Convenciones observadas
+
+- **Contratos explícitos en la API.** `backend/app/routes.py` define modelos Pydantic para las respuestas, usa `Literal` para enums de operaciones/categorías y declara `response_model` en las rutas.
+- **Cálculos del dashboard aislados y probados.** `frontend/src/lib/financial-utils.ts` contiene las agregaciones y formateadores; `frontend/src/lib/financial-utils.test.ts` los cubre con Vitest.
+- **Pruebas HTTP del backend con TestClient.** `backend/tests/test_routes.py` valida status, forma de respuesta, filtros y orden cronológico.
+- **Integración de desarrollo centralizada.** `frontend/vite.config.ts` define el alias `@` y proxya `/api` a `backend:8000`; `docker-compose.yml` configura esos dos servicios.
+- **Periodo visible derivado de los datos.** `App.tsx` pasa `formatPeriod(monthlyData)` al encabezado y la utilidad cubre rangos y datos vacíos con tests.
+
+## Riesgos adicionales observados
+
+- **Límites de fechas sin validación cruzada.** Las rutas aceptan `start_date` y `end_date`, pero `filter_movements_by_date` solo aplica ambos límites; no rechaza un inicio posterior al fin. Evidencia: `backend/app/routes.py`.
+- **Semilla aleatoria global.** `generate_mock_movements` llama `random.seed(seed)` y después usa las funciones globales de `random`; esto altera el estado aleatorio compartido del proceso. Evidencia: `backend/app/routes.py`.
+
+Estos hallazgos son propuestas para el trabajo futuro, no afirmaciones de que las medidas recomendadas ya estén implementadas.
